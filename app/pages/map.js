@@ -3,13 +3,11 @@ import { useEffect, useState } from 'react';
 
 export default function Map() {
   const [markerPositions, setMarkerPositions] = useState([]);
-  const [trains, setTrains] = useState([]);
 
   const fetchTrains = async () => {
-    console.log('Fetching train data...'); // Add console log to check button click
-    const response = await fetch('/api/trains');
+    console.log('Fetching train data...'); // Log to verify data fetching
+    const response = await fetch('http://localhost:3001/api/trains');
     const data = await response.json();
-    setTrains(data);
 
     // Transform the train data to marker positions
     const positions = data.map(train => ({
@@ -64,6 +62,13 @@ export default function Map() {
   }, []);
 
   useEffect(() => {
+    fetchTrains(); // Initial fetch
+    const intervalId = setInterval(fetchTrains, 60000); // Fetch data every 1 minute
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, []);
+
+  useEffect(() => {
     if (markerPositions.length > 0) {
       initMap();
     }
@@ -71,24 +76,8 @@ export default function Map() {
 
   return (
     <div>
-      <h1>Hello</h1>
-      <button onClick={fetchTrains}>Load Train Data</button>
+      <h1>Train Locations</h1>
       <div id="google-map" style={{ height: 'calc(100vh - 100px)', width: '100vw' }} />
-      <div>
-        {trains.map((train) => (
-          <div key={train._id.$oid}>
-            <p>Train Name: {train.train_name}</p>
-            <p>Engine Model: {train.engine_model}</p>
-            <p>Engine ID: {train.engine_id}</p>
-            <p>Latitude: {train.latitude}</p>
-            <p>Longitude: {train.longitude}</p>
-            <p>Last Station: {train.last_station}</p>
-            <p>Timestamp: {train.time_stamp}</p>
-            <p>Start Location: {train.start_location}</p>
-            <p>Destination: {train.destination}</p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
