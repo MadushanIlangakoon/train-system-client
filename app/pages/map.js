@@ -43,18 +43,8 @@ export default function Map() {
         infoWindow.open(googleMap, marker);
       });
     });
-
-
-
-
-    
   };
 
-
-
-
-
-  
   const loadGoogleMapsScript = () => {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&callback=initMap`;
@@ -86,7 +76,7 @@ export default function Map() {
 
   return (
     <div>
-      <h1><center>Train Locations</center></h1>
+      <h1>Train Locations</h1>
       <div id="google-map" style={{ height: 'calc(100vh - 100px)', width: '100vw' }} />
     </div>
   );
