@@ -6,7 +6,7 @@ export default function Map() {
 
   const fetchTrains = async () => {
     console.log('Fetching train data...'); // Log to verify data fetching
-    const response = await fetch('http://localhost:3001/api/trains');
+    const response = await fetch(process.env.NEXT_PUBLIC_TRAIN_API);
     const data = await response.json();
 
     // Transform the train data to marker positions
