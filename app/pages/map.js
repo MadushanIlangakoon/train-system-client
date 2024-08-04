@@ -3,23 +3,40 @@ import { useEffect, useState } from 'react';
 
 export default function Map() {
   const [markerPositions, setMarkerPositions] = useState([]);
-
+  const [error, setError] = useState(null);
   const fetchTrains = async () => {
     console.log('Fetching train data...'); // Log to verify data fetching
-    const response = await fetch(process.env.NEXT_PUBLIC_TRAIN_API);
-    const data = await response.json();
+    console.log('API URL:', process.env.NEXT_PUBLIC_TRAIN_API);
+    console.log('API Key:', process.env.NEXT_PUBLIC_API_KEY);
+    try{
+      const response = await fetch(process.env.NEXT_PUBLIC_TRAIN_API,
+      {
+        headers: {
+          'Authorization': `${process.env.NEXT_PUBLIC_API_KEY}`
+        }
+      });
 
-    // Transform the train data to marker positions
-    const positions = data.map(train => ({
-      lat: parseFloat(train.latitude),
-      lng: parseFloat(train.longitude),
-      city: train.last_station,
-      train: train.train_name,
-      engine: train.engine_model,
-      id: train.engine_id,
-    }));
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
-    setMarkerPositions(positions);
+      const data = await response.json();
+
+      // Transform the train data to marker positions
+      const positions = data.map(train => ({
+        lat: parseFloat(train.latitude),
+        lng: parseFloat(train.longitude),
+        city: train.last_station,
+        train: train.train_name,
+        engine: train.engine_model,
+        id: train.engine_id,
+      }));
+
+      setMarkerPositions(positions);
+    } catch(error){
+      console.error('Error fetching train data:', error);
+      setError(error.message);
+    }
   };
 
   const initMap = () => {
