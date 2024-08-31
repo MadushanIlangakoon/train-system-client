@@ -1,16 +1,18 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export default function Map() {
   const [markerPositions, setMarkerPositions] = useState([]);
   const [error, setError] = useState(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef([]);
+
   const fetchTrains = async () => {
-    console.log('Fetching train data...'); // Log to verify data fetching
+    console.log('Fetching train data...');
     console.log('API URL:', process.env.NEXT_PUBLIC_TRAIN_API);
     console.log('API Key:', process.env.NEXT_PUBLIC_API_KEY);
-    try{
-      const response = await fetch(process.env.NEXT_PUBLIC_TRAIN_API,
-      {
+    try {
+      const response = await fetch(process.env.NEXT_PUBLIC_TRAIN_API, {
         headers: {
           'Authorization': `${process.env.NEXT_PUBLIC_API_KEY}`
         }
@@ -33,22 +35,39 @@ export default function Map() {
       }));
 
       setMarkerPositions(positions);
-    } catch(error){
+    } catch (error) {
       console.error('Error fetching train data:', error);
       setError(error.message);
     }
   };
 
   const initMap = () => {
-    const googleMap = new window.google.maps.Map(document.getElementById('google-map'), {
+    mapRef.current = new window.google.maps.Map(document.getElementById('google-map'), {
       zoom: 7.5,
       center: { lat: 7.87708, lng: 80.69791 }, // Center of Sri Lanka
     });
 
+    // Initialize markers array
+    markersRef.current = [];
+
+    // Initial rendering of markers
     markerPositions.forEach((position) => {
+      addOrUpdateMarker(position);
+    });
+  };
+
+  const addOrUpdateMarker = (position) => {
+    // Find existing marker by train ID
+    const existingMarker = markersRef.current.find(marker => marker.id === position.id);
+
+    if (existingMarker) {
+      // Update position if marker exists
+      existingMarker.setPosition({ lat: position.lat, lng: position.lng });
+    } else {
+      // Create new marker if it doesn't exist
       const marker = new window.google.maps.Marker({
         position: { lat: position.lat, lng: position.lng },
-        map: googleMap,
+        map: mapRef.current,
         title: position.city,
       });
 
@@ -57,8 +76,19 @@ export default function Map() {
       });
 
       marker.addListener('click', () => {
-        infoWindow.open(googleMap, marker);
+        infoWindow.open(mapRef.current, marker);
       });
+
+      marker.id = position.id; // Attach the train ID to the marker
+
+      // Add to the markers array
+      markersRef.current.push(marker);
+    }
+  };
+
+  const updateMarkers = () => {
+    markerPositions.forEach(position => {
+      addOrUpdateMarker(position);
     });
   };
 
@@ -80,14 +110,14 @@ export default function Map() {
 
   useEffect(() => {
     fetchTrains(); // Initial fetch
-    const intervalId = setInterval(fetchTrains, 60000); // Fetch data every 1 minute
+    const intervalId = setInterval(fetchTrains, 60000); // Fetch data every 1/2 minute
 
     return () => clearInterval(intervalId); // Cleanup interval on component unmount
   }, []);
 
   useEffect(() => {
     if (markerPositions.length > 0) {
-      initMap();
+      updateMarkers(); // Update marker positions on the map
     }
   }, [markerPositions]);
 
